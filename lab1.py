@@ -1,5 +1,17 @@
-ALPHABET = 'abcdefghijklmnopqrstuvwxyzабвгдеёжзийклмнопрстуфхцчшщъыьэюя '
+ALPHABET = 'абвгдеёжзийклмнопрстуфхцчшщъыьэюя '
 DEFAULT_SHIFT = 10
+FREQUENCY_ORDER = 'оаеинтсрвлкмдпуяыьгзбчйхжюшцщэфё '
+
+# Предполагаемые частоты русских букв в процентах (исходя из обычного текста)
+EXPECTED_FREQUENCY = {
+    'о': 0.090, 'а': 0.080, 'е': 0.072, 'и': 0.062, 'н': 0.053,
+    'т': 0.053, 'с': 0.045, 'р': 0.040, 'в': 0.038, 'л': 0.035,
+    'к': 0.028, 'м': 0.026, 'д': 0.025, 'п': 0.023, 'у': 0.021,
+    'я': 0.018, 'ы': 0.016, 'ь': 0.014, 'г': 0.013, 'з': 0.011,
+    'б': 0.010, 'ч': 0.009, 'й': 0.008, 'х': 0.007, 'ж': 0.007,
+    'ю': 0.006, 'ш': 0.006, 'ц': 0.004, 'щ': 0.003, 'э': 0.003,
+    'ф': 0.002, 'ё': 0.001
+}
 
 def encrypt_text(input_text, shift):
     encrypted_text = ''
@@ -27,14 +39,48 @@ def decrypt_text(encrypted_text, shift):
     
     return decrypted_text
 
+def frequency_analysis(text):
+    frequency_dict = {}
+    total_chars = 0
+    for symbol in text:
+        if symbol in ALPHABET:
+            total_chars += 1
+            if symbol in frequency_dict:
+                frequency_dict[symbol] += 1
+            else:
+                frequency_dict[symbol] = 1
+    
+    for symbol in frequency_dict:
+        frequency_dict[symbol] /= total_chars
+    
+    return frequency_dict
+
+def score_text(text):
+    frequency_dict = frequency_analysis(text)
+    score = 0
+    for char in EXPECTED_FREQUENCY:
+        if char in frequency_dict:
+            score += abs(frequency_dict[char] - EXPECTED_FREQUENCY[char])
+        else:
+            score += EXPECTED_FREQUENCY[char]
+    return score
+
 def crack_caesar_cipher(encrypted_text):
-    print("\nПопытки расшифровки с использованием всех возможных сдвигов:")
-    for shift in range(-len(ALPHABET), len(ALPHABET)):
+    best_shift = 0
+    best_score = float('inf')
+    
+    for shift in range(len(ALPHABET)):
         decrypted_text = decrypt_text(encrypted_text, shift)
-        print(f"Сдвиг {shift}: {decrypted_text}")
+        score = score_text(decrypted_text)
+        if score < best_score:
+            best_score = score
+            best_shift = shift
+            
+    decrypted_text = decrypt_text(encrypted_text, best_shift)
+    print(f"\nЛучший сдвиг: {best_shift}\nРасшифрованный текст: {decrypted_text}")
 
 def main():
-    print('Шифр Цезаря (Алфавиты: Ru + Eng)')
+    print('Шифр Цезаря')
 
     action = input("Выберите действие:\n1 - Зашифровать\n2 - Дешифровать\n3 - Взломать\nВведите номер действия: ")
     
